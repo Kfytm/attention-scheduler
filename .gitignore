@@ -1,0 +1,18 @@
+# 依赖与构建产物
+node_modules/
+dist/
+*.log
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 本地实测产物
+*.local.md
+overhead-report.json
