@@ -5,12 +5,19 @@
   "keywords": [
     "dsh",
     "dsh-plugin",
+    "dsh-skill",
     "deepseek-harness",
     "skill",
-    "attention",
-    "context",
-    "memory",
-    "retrieval"
+    "agent-skill",
+    "context-engineering",
+    "context-management",
+    "attention-scheduler",
+    "token-budget",
+    "agent-memory",
+    "long-term-memory",
+    "retrieval",
+    "hallucination",
+    "llm"
   ],
   "type": "module",
   "main": "lib/index.js",
