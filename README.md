@@ -230,7 +230,11 @@ grep -rInE 'child_process|execSync|spawn\(|eval\(|new Function|fetch\(|Invoke-We
 find . -type f -size +100k -not -path './.git/*'
 ```
 
-结果：5 项均无命中（示例数据中的会话标签已匿名化为"示例会话 A/B"）。
+结果：5 项均无真实命中（示例数据中的会话标签已匿名化为"示例会话 A/B"）。
+
+> 注：`README.md` 本节的命令块与说明文本**本身包含上述模式**，直接扫描会出现 3 处自匹配；
+> 复跑时请加 `--exclude=README.md`，或把这 3 处视为预期自匹配。
+
 发现问题请开 Issue；涉及安全的问题请标注 `security`。
 
 ## License
