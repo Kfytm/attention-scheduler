@@ -1,5 +1,12 @@
 # attention-scheduler · 注意力调度规则
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) [![version](https://img.shields.io/badge/version-2.4.0-blue.svg)](CHANGELOG.md)
+
+> 🎯 **本技能旨在减轻、消除 AI 上下文幻觉问题。**
+> 上下文幻觉的根因通常是"历史污染"：过期结论、无关片段、未经核实或被误当作事实的旧对话，
+> 悄无声息地混进当前推理。本技能用显式规则把这件事管起来——**该不该检索、召回多少、保留什么、
+> 丢弃什么、写回什么**，全部有据可依、可审计、可复现。
+
 一套可复用的 **注意力 / 上下文 / 记忆** 使用规范，作为 [DeepSeek Harness](https://github.com/deepseek-ai) 的
 **技能（Skill）** 分发：让模型在"该记什么、该查什么、该丢什么、该写回什么"上有一致、可审计的行为依据。
 
@@ -197,4 +204,31 @@ attention-scheduler/
 
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 attention-scheduler contributors
+
+```
+MIT License
+
+Copyright (c) 2026 attention-scheduler contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+> 完整文本见 [`LICENSE`](LICENSE)；`package.json` 中亦声明 `"license": "MIT"`。
+> 若要把版权人改成你本人/组织，替换 `LICENSE` 与本节里的 `attention-scheduler contributors` 即可。
