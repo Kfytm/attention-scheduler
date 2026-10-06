@@ -18,7 +18,25 @@
 
 ## 安装
 
-### 方式一：脚本安装（推荐）
+### 方式一：作为插件安装（推荐 · 一条命令）
+
+本仓库同时是**标准 DSH 插件**（`package.json` 带 `dsh.bundle.patch`），插件加载时会把技能
+注册进技能注册表（`ctx.skills.registerProvider()`），因此可以直接：
+
+```sh
+# 从 GitHub 安装（任意 profile）
+dsh plugin --profile web add github:<user>/attention-scheduler
+
+# 本地开发：用 link 方式，改完即生效
+dsh plugin --profile web add link:D:\path\to\attention-scheduler
+```
+
+装完**重启该 profile**即可用。卸载：`dsh plugin --profile web remove dsh-attention-scheduler`。
+
+> 优点：技能随插件版本走（可 `dsh plugin update`）；`SKILL.md` 变化会热刷新，无需重启宿主。
+> rank = 250，低于用户本地文件技能（400）与官方内置技能（600），**你放在 `~/.dsh/skills/` 的同名技能会覆盖它**。
+
+### 方式二：作为文件技能安装（脚本 / 手工）
 
 ```powershell
 # Windows（Windows PowerShell 5.1 亦可；若装了 PowerShell 7 可把 powershell 换成 pwsh）
@@ -77,6 +95,9 @@ node scripts/measure-overhead.cjs --session "~/.dsh/sessions/<ws>/<session-id>/s
 ```
 attention-scheduler/
 ├── SKILL.md                          # 技能主体（frontmatter: name/description）
+├── package.json                      # 插件清单（dsh.bundle.patch → 一键安装）
+├── cordis.patch.yml                  # bundle 挂载清单（insert 一行）
+├── lib/index.js                      # 插件半边：注册运行期技能 provider（零依赖）
 ├── README.md
 ├── LICENSE                           # MIT
 ├── CHANGELOG.md
@@ -84,8 +105,8 @@ attention-scheduler/
 │   ├── config-map.md                 # 哪些条款必须落到配置才生效（含安全原则）
 │   └── overhead-measurement.md       # 固定开销的测量口径
 └── scripts/
-    ├── install.ps1                   # Windows 安装
-    ├── install.sh                    # macOS/Linux 安装
+    ├── install.ps1                   # Windows 文件技能安装
+    ├── install.sh                    # macOS/Linux 文件技能安装
     └── measure-overhead.cjs          # 固定开销实测
 ```
 

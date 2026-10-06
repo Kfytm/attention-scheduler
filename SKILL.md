@@ -7,7 +7,7 @@ description: |
   召回与注入条数、记忆注入预算、冲突处理优先级、写回白名单与格式，
   以及固定开销（系统提示 + 工具表）实测脚本。
 metadata:
-  version: 2.0.0
+  version: 2.1.0
   language: zh-CN
   license: MIT
   spec: references/config-map.md
@@ -153,8 +153,20 @@ node scripts/measure-overhead.cjs --session "<path/to/session.v4.jsonl.zstd>"
 
 ## 十三、安装与分发
 
-本技能是一个**标准 DSH 技能目录**（`SKILL.md` + `references/` + `scripts/`），可直接作为
-GitHub 仓库发布，也可复制到本机技能目录：
+本仓库有**两种分发形态**，可同时存在：
+
+### 形态一：作为 DSH 插件（推荐，一条命令）
+
+```sh
+dsh plugin --profile <profile> add github:<user>/attention-scheduler
+# 本地开发：
+dsh plugin --profile <profile> add link:D:\path\to\attention-scheduler
+```
+
+插件加载时通过 `ctx.skills.registerProvider()` 把技能注册进注册表（rank 250，低于用户本地文件技能 400，
+因此 `~/.dsh/skills/` 里的同名技能可覆盖它）；`SKILL.md` 变更会热刷新，无需重启宿主。
+
+### 形态二：作为文件技能（复制到技能目录）
 
 ```powershell
 # Windows（Windows PowerShell 5.1 亦可）

@@ -2,6 +2,16 @@
 
 本文件记录本技能的规则版本。规则语义变更请递增 minor，措辞/错别字修正用 patch。
 
+## 2.1.0 — 2026-10-06
+
+- **新增插件形态**：本仓库同时是标准 DSH 插件，可用 `dsh plugin add github:<user>/attention-scheduler` 一键安装
+  - `package.json`：`dsh.bundle.patch` + `files`/`keywords`
+  - `cordis.patch.yml`：bundle 挂载清单（insert 一行）
+  - `lib/index.js`：零依赖插件半边，用 `ctx.skills.registerProvider()` 注册运行期技能（rank 250，
+    低于用户本地文件技能 400，可被覆盖），并监听 `SKILL.md` 变化热刷新
+  - 可选调试：`DSH_SKILL_PROBE=1` 时向 stdout 打印注册结果
+- 文档：安装章节拆为"插件形态 / 文件技能形态"，新增 `lib/` 结构说明
+
 ## 2.0.0 — 2026-10-06
 
 - 由"注意力调度规则 v1"整理为可分发的 DSH 技能（`SKILL.md` + `references/` + `scripts/`）

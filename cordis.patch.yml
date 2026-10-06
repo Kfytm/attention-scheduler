@@ -1,0 +1,7 @@
+# 注意力调度规则（attention-scheduler）——bundle 挂载清单
+#
+# 本文件由 package.json 的 dsh.bundle.patch 指向：`dsh plugin add` 会把本插件
+# 自动挂进 profile 的 bundles 层，用户无需手写 insert（手写会导致同名 entry 重复而启动失败）。
+- insert:
+    - id: attention-scheduler
+      name: 'dsh-attention-scheduler'
