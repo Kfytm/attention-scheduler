@@ -1,6 +1,6 @@
 {
   "name": "dsh-attention-scheduler",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "注意力调度与记忆检索规则 —— DeepSeek Harness 技能（内嵌插件分发，可 dsh plugin add 一键安装）",
   "keywords": [
     "dsh",

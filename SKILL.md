@@ -7,7 +7,7 @@ description: |
   召回与注入条数、记忆注入预算、冲突处理优先级、写回白名单与格式，
   以及固定开销（系统提示 + 工具表）实测脚本。
 metadata:
-  version: 2.2.0
+  version: 2.3.0
   language: zh-CN
   license: MIT
   spec: references/config-map.md
@@ -175,6 +175,10 @@ node scripts/measure-overhead.cjs --session "<path/to/session.v4.jsonl.zstd>"
 
 > 注意：**L1 是累积成本**——注入的消息留在历史里直到被压缩，所以要看的不是"单次多少"，而是
 > `单次体积 × 注入频次`，以及它相对固定开销的占比。
+
+> **宿主破坏性更新后**：先跑 `node scripts/probe-assumptions.cjs` 看哪些绑定点漂移，
+> 再按 `references/porting-guide.md` 的"重塑五步"处理。原则是——
+> **规则正文（§一–§十）不动，只改适配圈（`lib/`、`cordis.patch.yml`）与观测口径（`scripts/`、配置落点表）。**
 
 ## 十二、配置落点（哪些条款提示词管不住）
 
