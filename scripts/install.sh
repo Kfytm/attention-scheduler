@@ -30,6 +30,12 @@ TARGET="$SKILLS_ROOT/$SKILL_NAME"
 [[ -f "$REPO_ROOT/SKILL.md" ]] || { echo "在 $REPO_ROOT 下找不到 SKILL.md" >&2; exit 1; }
 [[ "$SKILL_NAME" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || { echo "技能名不合法: $SKILL_NAME" >&2; exit 1; }
 
+# 路径护栏：目标必须落在技能目录内，避免误删/误写其他位置
+case "$TARGET" in
+	"$SKILLS_ROOT"/*) ;;
+	*) echo "拒绝操作：目标不在技能目录内（$TARGET）" >&2; exit 1 ;;
+esac
+
 mkdir -p "$SKILLS_ROOT"
 
 if [[ -e "$TARGET" ]]; then

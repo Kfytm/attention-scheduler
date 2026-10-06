@@ -34,6 +34,13 @@ if ($SkillName -notmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') {
 	throw "技能名不合法：$SkillName（须为 kebab-case）"
 }
 
+# 路径护栏：目标必须落在技能目录内，避免误删/误写其他位置
+$resolvedRoot = [System.IO.Path]::GetFullPath($skillsRoot).TrimEnd('\')
+$resolvedTarget = [System.IO.Path]::GetFullPath($target)
+if (-not $resolvedTarget.StartsWith($resolvedRoot + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+	throw "拒绝操作：目标不在技能目录内（$resolvedTarget）"
+}
+
 New-Item -ItemType Directory -Force -Path $skillsRoot | Out-Null
 
 if (Test-Path $target) {

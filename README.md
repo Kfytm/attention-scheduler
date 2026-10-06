@@ -153,8 +153,8 @@ attention-scheduler/
 
 | 会话 | 轮次 | L0 骨架 | L1 动态召回 |
 |---|---|---|---|
-| 六爻会话 | 66 | 0 | 47 条 / 169,158 字符 ≈ **52,862 tokens（占上下文成本 95%）** |
-| 本机主会话 | 96 | 2 条 / 5,830 字符 ≈ 1,822 tokens | 4 条 / 6,044 字符 ≈ 1,889 tokens |
+| 示例会话 A（长会话，自动召回全开）| 66 | 0 | 47 条 / 169,158 字符 ≈ **52,862 tokens（占上下文成本 95%）** |
+| 示例会话 B（关闭自动召回，改规则调度）| 96 | 2 条 / 5,830 字符 ≈ 1,822 tokens | 4 条 / 6,044 字符 ≈ 1,889 tokens |
 
 复现：`node scripts/measure-overhead.cjs --session <会话日志>`。
 
@@ -201,6 +201,37 @@ attention-scheduler/
 > ⚠️ **再次提醒**：需要搭配记忆插件。如果没有（未接 MemOS 之类的长期记忆），本技能只有
 > **注意力预算、保留优先级、压缩六要素、写回白名单**会实际生效；检索触发、召回/注入条数、
 > 注入预算等条款将处于空转状态。
+
+## 安全说明
+
+安装前请自行复核（本仓库刻意保持"可一眼读完"的体量）：
+
+| 项 | 现状 |
+|---|---|
+| **依赖** | `package.json` **零 dependencies**；插件只用 Node 内置模块（`node:fs` / `node:path` / `node:url`）|
+| **网络** | 插件与脚本**不发起任何网络请求**，无遥测、无外部上报、无自动更新 |
+| **命令执行** | 不使用 `child_process` / `exec` / `eval` / `new Function` |
+| **文件读取范围** | ① 插件（`lib/index.js`）：只读本仓库目录下的 `SKILL.md`（及 `skills/*/SKILL.md`），并以只读 provider 注册；② `measure-overhead.cjs` / `probe-assumptions.cjs`：**只读**会话日志与宿主安装包，不写任何文件 |
+| **文件写入范围** | **只有安装脚本**会写文件，且仅写 `$DSH_HOME/skills/<技能名>/`：技能名强制 kebab-case 校验 + **路径护栏**（目标必须落在技能目录内，否则拒绝）；仅 `-Force` / `--force` 才删除同名既有目录 |
+| **权限** | 插件运行在宿主进程内，因此**只做技能注册**，不注册路由、不注入全局提示词、不改任何配置 |
+
+发布前自检（可复现的 5 项扫描，本仓库在 v2.4.0 已执行）：
+
+```bash
+# 1) 密钥与凭据
+grep -rInE 'sk-[A-Za-z0-9]{10,}|ghp_[A-Za-z0-9]{10,}|Bearer [A-Za-z0-9._-]{20,}|api[_-]?key\s*[:=]' .
+# 2) 个人路径 / 用户名
+grep -rInE 'C:\\\\Users|/home/[a-z]+|D:\\\\' .
+# 3) 会话 ID / 记忆 ID（隐私痕迹）
+grep -rInE 'session-[0-9a-f]{8}|tr_[a-z0-9]{8}' .
+# 4) 危险调用
+grep -rInE 'child_process|execSync|spawn\(|eval\(|new Function|fetch\(|Invoke-WebRequest' .
+# 5) 二进制 / 大文件
+find . -type f -size +100k -not -path './.git/*'
+```
+
+结果：5 项均无命中（示例数据中的会话标签已匿名化为"示例会话 A/B"）。
+发现问题请开 Issue；涉及安全的问题请标注 `security`。
 
 ## License
 
