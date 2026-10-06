@@ -1,0 +1,6 @@
+# 统一行尾，避免 Windows 上把 .sh 写成 CRLF 导致无法执行
+* text=auto eol=lf
+*.sh  text eol=lf
+*.cjs text eol=lf
+*.md  text eol=lf
+*.ps1 text eol=crlf
