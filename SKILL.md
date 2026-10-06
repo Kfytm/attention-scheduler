@@ -8,7 +8,7 @@ description: |
   以及固定开销（系统提示 + 工具表）实测脚本。
   目标是**减轻、消除上下文幻觉**：避免过期结论、无关片段、未经核实或被误当作事实的历史内容污染当前回答。
 metadata:
-  version: 2.4.0
+  version: 2.4.1
   language: zh-CN
   license: MIT
   spec: references/config-map.md
@@ -200,7 +200,7 @@ node scripts/measure-overhead.cjs --session "<path/to/session.v4.jsonl.zstd>"
 ### 形态一：作为 DSH 插件（推荐，一条命令）
 
 ```sh
-dsh plugin --profile <profile> add github:<user>/attention-scheduler
+dsh plugin --profile <profile> add github:Kfytm/attention-scheduler
 # 本地开发：
 dsh plugin --profile <profile> add link:D:\path\to\attention-scheduler
 ```

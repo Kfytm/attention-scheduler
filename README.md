@@ -36,7 +36,7 @@
 
 ```sh
 # 从 GitHub 安装（任意 profile）
-dsh plugin --profile web add github:<user>/attention-scheduler
+dsh plugin --profile web add github:Kfytm/attention-scheduler
 
 # 本地开发：用 link 方式，改完即生效
 dsh plugin --profile web add link:D:\path\to\attention-scheduler
@@ -51,7 +51,7 @@ dsh plugin --profile web add link:D:\path\to\attention-scheduler
 
 ```powershell
 # Windows（Windows PowerShell 5.1 亦可；若装了 PowerShell 7 可把 powershell 换成 pwsh）
-git clone <this-repo> attention-scheduler
+git clone https://github.com/Kfytm/attention-scheduler.git
 cd attention-scheduler
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1            # 复制安装
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Mode link # 或目录联接，便于开发
@@ -59,7 +59,7 @@ powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Mode link # 或目
 
 ```bash
 # macOS / Linux / WSL
-git clone <this-repo> attention-scheduler
+git clone https://github.com/Kfytm/attention-scheduler.git
 cd attention-scheduler
 bash scripts/install.sh
 ```
@@ -239,12 +239,12 @@ find . -type f -size +100k -not -path './.git/*'
 
 ## License
 
-[MIT](LICENSE) © 2026 attention-scheduler contributors
+[MIT](LICENSE) © 2026 Kfytm
 
 ```
 MIT License
 
-Copyright (c) 2026 attention-scheduler contributors
+Copyright (c) 2026 Kfytm
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -266,4 +266,4 @@ SOFTWARE.
 ```
 
 > 完整文本见 [`LICENSE`](LICENSE)；`package.json` 中亦声明 `"license": "MIT"`。
-> 若要把版权人改成你本人/组织，替换 `LICENSE` 与本节里的 `attention-scheduler contributors` 即可。
+> 版权人：Kfytm（如需变更请同步修改 `LICENSE`、本节与 `package.json`）。

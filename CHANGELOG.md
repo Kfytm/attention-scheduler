@@ -2,6 +2,14 @@
 
 本文件记录本技能的规则版本。规则语义变更请递增 minor，措辞/错别字修正用 patch。
 
+## 2.4.1 — 2026-10-06
+
+- 元数据落实：版权人与仓库信息填入 Kfytm
+  - LICENSE 与 README.md 的版权行改为 `Copyright (c) 2026 Kfytm`
+  - package.json 新增 `author` / `repository` / `homepage` / `bugs`
+  - 安装与克隆命令里的占位符 `<user>` / `<this-repo>` 替换为真实地址
+    （`dsh plugin add github:Kfytm/attention-scheduler`）
+
 ## 2.4.0 — 2026-10-06
 
 - 明确**技能宗旨**：本技能旨在**减轻、消除 AI 上下文幻觉问题**（针对"历史污染"：过期结论、
@@ -36,7 +44,7 @@
 
 ## 2.1.0 — 2026-10-06
 
-- **新增插件形态**：本仓库同时是标准 DSH 插件，可用 `dsh plugin add github:<user>/attention-scheduler` 一键安装
+- **新增插件形态**：本仓库同时是标准 DSH 插件，可用 `dsh plugin add github:Kfytm/attention-scheduler` 一键安装
   - `package.json`：`dsh.bundle.patch` + `files`/`keywords`
   - `cordis.patch.yml`：bundle 挂载清单（insert 一行）
   - `lib/index.js`：零依赖插件半边，用 `ctx.skills.registerProvider()` 注册运行期技能（rank 250，

@@ -1,6 +1,6 @@
 {
   "name": "dsh-attention-scheduler",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "注意力调度与记忆检索规则 —— DeepSeek Harness 技能（内嵌插件分发，可 dsh plugin add 一键安装）",
   "keywords": [
     "dsh",
@@ -32,5 +32,14 @@
       "patch": "./cordis.patch.yml"
     }
   },
-  "license": "MIT"
+  "author": "Kfytm",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kfytm/attention-scheduler.git"
+  },
+  "homepage": "https://github.com/Kfytm/attention-scheduler#readme",
+  "bugs": {
+    "url": "https://github.com/Kfytm/attention-scheduler/issues"
+  }
 }
