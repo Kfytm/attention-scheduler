@@ -1,23 +1,26 @@
 #!/usr/bin/env node
 /**
- * measure-overhead.cjs —— 实测 DSH 会话的"固定开销"（系统提示 + 工具定义）。
+ * measure-overhead.cjs —— 实测 DSH 会话的三类上下文成本：
+ *
+ *   1. 固定开销  = 系统提示 + 工具定义（每轮都在，与记忆系统无关）
+ *   2. 骨架注入  = 稳定的工作区指令 / 记忆骨架（agent-instructions、boot 块一类）
+ *   3. 动态召回  = 每轮按查询命中的记忆注入（memos 一类）
+ *
+ * 后两类合称"常驻注入"：注入消息会留在历史里直到被压缩，因此成本是**累积**的，
+ * 这正是"降频 / 限体积 / 及时压缩"三条策略要管的量。
  *
  * 用法：
  *   node scripts/measure-overhead.cjs --session "<path/to/session.v4.jsonl.zstd>"
  *   node scripts/measure-overhead.cjs --session <file> --bytes-per-token 3.2 --json
  *
- * 说明：
- *   - 会话日志是多帧 zstd（每帧一段追加内容），按 magic number 逐帧解压；
- *   - 系统提示取 `system/message`（source.kind = "system-prompt"）的文本字符数；
- *   - 工具定义取 `request/header` 的 data.header.tools 的 JSON 体积；
- *   - token 为估算值（默认 3.2 字符/token），需要精确值请用目标模型 tokenizer 复核。
+ * 口径与依据见 references/overhead-measurement.md。
  */
 const fs = require("node:fs");
 const zlib = require("node:zlib");
 
 /** 解析命令行参数。 */
 function parseArgs(argv) {
-	const out = { session: null, bytesPerToken: 3.2, json: false };
+	const out = { session: null, bytesPerToken: 3.2, json: false, help: false };
 	for (let i = 2; i < argv.length; i += 1) {
 		const arg = argv[i];
 		if (arg === "--session") out.session = argv[++i];
@@ -49,21 +52,41 @@ function readSessionLines(file) {
 	return parts.join("").split("\n").filter(Boolean);
 }
 
-/** 从会话行里提取系统提示、工具表、上下文窗口与 maxTokens。 */
-function extract(lines) {
+/** 从一行消息事件里取出文本长度与来源 kind。 */
+function readMessage(line) {
+	try {
+		const parsed = JSON.parse(line);
+		const data = parsed?.data ?? {};
+		const message = data.message ?? data.inserted?.[0] ?? data;
+		const content = message?.content;
+		const text = Array.isArray(content) ? content.map((block) => block.text ?? "").join("") : "";
+		const kind = message?.source?.kind ?? data?.source?.kind ?? "";
+		return { type: parsed?.type ?? "", kind, chars: text.length };
+	} catch {
+		return null;
+	}
+}
+
+/** 汇总一次会话的各类成本。 */
+function measure(lines) {
+	let turns = 0;
 	let systemPromptChars = 0;
+	let systemPromptRounds = 0;
 	let header = null;
 	let context = null;
+	const skeletonKinds = new Set(["agent-instructions", "system-prompt"]);
+	const recallKinds = new Set(["plugin:memos-local-memory"]);
+	let skeletonCount = 0;
+	let skeletonChars = 0;
+	let recallCount = 0;
+	let recallChars = 0;
+
 	for (const line of lines) {
+		if (line.includes('"type":"turn/start"')) turns += 1;
 		if (line.includes('"kind":"system-prompt"')) {
-			try {
-				const parsed = JSON.parse(line);
-				const content = parsed?.data?.content ?? parsed?.data?.message?.content;
-				const text = Array.isArray(content) ? content.map((b) => b.text ?? "").join("") : "";
-				if (text.length > 200) systemPromptChars = text.length;
-			} catch {
-				/* ignore */
-			}
+			systemPromptRounds += 1;
+			const parsed = readMessage(line);
+			if (parsed !== null && parsed.chars > 200) systemPromptChars = Math.max(systemPromptChars, parsed.chars);
 		}
 		if (line.includes('"type":"request/header"')) {
 			try {
@@ -79,14 +102,41 @@ function extract(lines) {
 				/* ignore */
 			}
 		}
+		if (!line.includes('"type":"user/message"') && !line.includes('"kind":"agent-instructions"') && !line.includes("memos-local-memory")) continue;
+		const message = readMessage(line);
+		if (message === null || message.chars === 0) continue;
+		if (skeletonKinds.has(message.kind)) {
+			skeletonCount += 1;
+			skeletonChars += message.chars;
+		} else if (recallKinds.has(message.kind)) {
+			recallCount += 1;
+			recallChars += message.chars;
+		}
 	}
+
 	const tools = Array.isArray(header?.tools) ? header.tools : [];
-	return { systemPromptChars, tools, toolsJsonChars: JSON.stringify(tools).length, header, context };
+	return {
+		turns,
+		systemPromptChars,
+		systemPromptRounds,
+		systemPromptTokens: 0,
+		toolCount: tools.length,
+		toolsJsonChars: JSON.stringify(tools).length,
+		skeletonCount,
+		skeletonChars,
+		recallCount,
+		recallChars,
+		header,
+		context,
+		toolNames: tools.map((tool) => tool.name)
+	};
 }
 
 const args = parseArgs(process.argv);
 if (args.help || args.session === null) {
-	console.log("用法: node scripts/measure-overhead.cjs --session <session.*.jsonl.zstd> [--bytes-per-token 3.2] [--json]");
+	console.log(
+		"用法: node scripts/measure-overhead.cjs --session <session.*.jsonl.zstd> [--bytes-per-token 3.2] [--json]"
+	);
 	process.exit(args.help ? 0 : 1);
 }
 if (!fs.existsSync(args.session)) {
@@ -94,35 +144,58 @@ if (!fs.existsSync(args.session)) {
 	process.exit(2);
 }
 
-const lines = readSessionLines(args.session);
-const { systemPromptChars, tools, toolsJsonChars, header, context } = extract(lines);
 const per = args.bytesPerToken;
 const est = (chars) => Math.round(chars / per);
+const raw = measure(readSessionLines(args.session));
 const result = {
 	session: args.session,
-	systemPromptChars,
-	systemPromptTokens: est(systemPromptChars),
-	toolCount: tools.length,
-	toolsJsonChars,
-	toolsTokens: est(toolsJsonChars),
-	fixedOverheadTokens: est(systemPromptChars + toolsJsonChars),
-	provider: header?.config?.provider ?? null,
-	model: header?.config?.model ?? null,
-	reasoningEffort: header?.config?.reasoningEffort ?? null,
-	maxTokens: header?.config?.maxTokens ?? null,
-	contextWindow: context?.contextWindow ?? null,
-	toolNames: tools.map((t) => t.name),
+	turns: raw.turns,
+	systemPromptChars: raw.systemPromptChars,
+	systemPromptTokens: est(raw.systemPromptChars),
+	toolCount: raw.toolCount,
+	toolsJsonChars: raw.toolsJsonChars,
+	toolsTokens: est(raw.toolsJsonChars),
+	fixedOverheadChars: raw.systemPromptChars + raw.toolsJsonChars,
+	fixedOverheadTokens: est(raw.systemPromptChars + raw.toolsJsonChars),
+	skeletonCount: raw.skeletonCount,
+	skeletonChars: raw.skeletonChars,
+	skeletonTokens: est(raw.skeletonChars),
+	recallCount: raw.recallCount,
+	recallChars: raw.recallChars,
+	recallTokens: est(raw.recallChars),
+	injectedChars: raw.skeletonChars + raw.recallChars,
+	injectedTokens: est(raw.skeletonChars + raw.recallChars),
+	provider: raw.header?.config?.provider ?? null,
+	model: raw.header?.config?.model ?? null,
+	reasoningEffort: raw.header?.config?.reasoningEffort ?? null,
+	maxTokens: raw.header?.config?.maxTokens ?? null,
+	contextWindow: raw.context?.contextWindow ?? null,
+	toolNames: raw.toolNames,
 	bytesPerToken: per
 };
 
 if (args.json) {
 	console.log(JSON.stringify(result, null, 2));
 } else {
-	console.log("=== 固定开销实测 ===");
+	const pct = (value) => (result.fixedOverheadChars + result.injectedChars === 0 ? "0%" : `${Math.round((value / (result.fixedOverheadChars + result.injectedChars)) * 100)}%`);
+	console.log("=== 上下文成本实测 ===");
 	console.log(`会话日志     : ${result.session}`);
-	console.log(`系统提示     : ${result.systemPromptChars} 字符  ≈ ${result.systemPromptTokens} tokens`);
-	console.log(`工具定义     : ${result.toolCount} 个工具, ${result.toolsJsonChars} 字符  ≈ ${result.toolsTokens} tokens`);
-	console.log(`固定开销合计 : ≈ ${result.fixedOverheadTokens} tokens  （按 ${per} 字符/token 估算）`);
+	console.log(`轮次数       : ${result.turns}`);
+	console.log("");
+	console.log("【固定开销】每轮都在，与记忆系统无关");
+	console.log(`  系统提示   : ${result.systemPromptChars} 字符 ≈ ${result.systemPromptTokens} tokens`);
+	console.log(`  工具定义   : ${result.toolCount} 个, ${result.toolsJsonChars} 字符 ≈ ${result.toolsTokens} tokens`);
+	console.log(`  合计       : ≈ ${result.fixedOverheadTokens} tokens`);
+	console.log("");
+	console.log("【常驻注入】留在历史里累积，直到被压缩");
+	console.log(`  骨架注入   : ${result.skeletonCount} 条, ${result.skeletonChars} 字符 ≈ ${result.skeletonTokens} tokens  (${pct(result.skeletonChars)})`);
+	console.log(`  动态召回   : ${result.recallCount} 条, ${result.recallChars} 字符 ≈ ${result.recallTokens} tokens  (${pct(result.recallChars)})`);
+	console.log(`  注入合计   : ≈ ${result.injectedTokens} tokens`);
+	if (result.turns > 0) {
+		console.log(`  平均每轮   : 骨架 ${Math.round(result.skeletonChars / result.turns)} 字符 / 召回 ${Math.round(result.recallChars / result.turns)} 字符`);
+	}
+	console.log("");
 	console.log(`模型         : ${result.provider}/${result.model}  effort=${result.reasoningEffort}  maxTokens=${result.maxTokens}`);
 	console.log(`上下文窗口   : ${result.contextWindow}`);
+	console.log(`（按 ${per} 字符/token 估算；口径见 references/overhead-measurement.md）`);
 }
